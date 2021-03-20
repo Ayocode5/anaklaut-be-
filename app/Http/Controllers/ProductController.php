@@ -13,14 +13,7 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-
     protected $productTypes = array('ikan','kepiting','cumi','kerang');
-
     protected $owner_id = null;
 
     public function __construct()
@@ -33,28 +26,19 @@ class ProductController extends Controller
     {
          // Get current Admin Id 
         $owner_id = Auth::guard('admin')->user()->id;
+
         $products = Product::with(['owner','product_galleries'])->where('owned_by', $owner_id)->get();
-        // dd($products->count());
         return view('pages.admin.products.index', compact('products'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    //Product create view
     public function create()
     {
         $productTypes = $this->productTypes;
         return view('pages.admin.products.create', compact('productTypes'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
+    /* Store a newly created resource in storage. */
     public function store(Request $request)
     {
 
@@ -88,12 +72,7 @@ class ProductController extends Controller
 
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+    /* Display the specified resource. */
     public function show($id)
     {   
         $products = Product::with(['product_galleries'])->findOrFail($id);
@@ -101,12 +80,7 @@ class ProductController extends Controller
         return view('pages.admin.products.detail', compact('products'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+    /** Show the form for editing the specified resource. */
     public function edit($id)
     {
         $product = Product::findOrFail(Crypt::decrypt($id));
@@ -114,13 +88,7 @@ class ProductController extends Controller
         return view('pages.admin.products.edit', compact(['product','productTypes']));
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+    /** Update the specified resource in storage. */
     public function update(Request $request, $id)
     {
         // Validating new Product
@@ -156,12 +124,7 @@ class ProductController extends Controller
         return redirect('/admin/products');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+    /** Remove the specified resource from storage. */
     public function destroy($id)
     {
         Product::destroy($id);

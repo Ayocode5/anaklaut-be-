@@ -44,11 +44,11 @@
         </div>
     </li>
 
-    <li class="nav-item {{ request()->is('admin/orders') ? 'active' : '' }}">
+    {{-- <li class="nav-item {{ request()->is('admin/orders') ? 'active' : '' }}">
         <a class="nav-link" href="{{ url('/admin/orders') }}">
             <i class="fas fa-user"></i>
-            <span>Pesanan Pembeli</span></a>
-    </li>
+            <span>Pesanan</span></a>
+    </li> --}}
 
     <li class="nav-item {{ request()->is('admin/transactions') ? 'active' : '' }}">
         <a class="nav-link" href="{{ url('/admin/transactions') }}">

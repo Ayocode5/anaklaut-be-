@@ -52,8 +52,9 @@ Route::group(['prefix' => 'admin'], function(){
     
     // Midtrans Gateway Test
     Route::get('/transactions', [\App\Http\Controllers\TransactionController::class, 'index']);
-    Route::get('/transaction/{orderId}/details', [\App\Http\Controllers\TransactionController::class, 'statusTransaction'])->name("status.transaction");
-    Route::post('/transaction/{orderId}/refund', [\App\Http\Controllers\TransactionController::class, 'refundTransaction'])->name("refund.transaction");
+    Route::get('/transaction/{orderId}/details', [\App\Http\Controllers\TransactionController::class, 'status'])->name("status.transaction");
+    Route::get('/transaction/{orderId}/approve', [\App\Http\Controllers\TransactionController::class, 'approve'])->name("approve.transaction");
+    Route::post('/transaction/{orderId}/refund', [\App\Http\Controllers\TransactionController::class, 'refund'])->name("refund.transaction");
 });
 
 Route::get('/payment', [\App\Http\Controllers\TransactionController::class, 'checkout'])->name('payment');

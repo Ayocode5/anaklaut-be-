@@ -15,7 +15,7 @@
                             <div class="card">
                                 <div class="card-body px-0 py-0">
                                     {{-- <div class="col-2"> --}}
-                                    <img class="rounded shadow" style="height: 154px; width: 100%;" class=""
+                                    <img class="border border-primary rounded" style="height: 154px; width: 100%;" class=""
                                         src="{{ $gallery->image }}" alt="Card image cap">
                                     {{-- </div> --}}
                                 </div>

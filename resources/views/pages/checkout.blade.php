@@ -45,29 +45,34 @@
                 url: "{{ route('api.payment.token') }}",
                 type: 'POST',
                 data: {
-                    "orders": [{  //ORDER HARUS DARI MERCHANT YANG SAMA
+                    "orders": [ //ORDER DIKELOMPOKKAN BERDASARKAN ADMIN ID
+                        { // ORDER DARI ADMIN 1
                             "order_from": 1,
                             "customer_id": 1,
-                            "order_data": {
-                                "product_id": 3,
-                                "quantity": 1,
-                            }
+                            "order_data": [{ // DETAIL PRODUK dari ADMIN ID 1
+                                    "product_id": 3,
+                                    "quantity": 1,
+                                },
+                                { // DETAIL PRODUK 2 dari ADMIN ID 1
+                                    "product_id": 1,
+                                    "quantity": 5,
+                                }
+                            ]
                         },
-                        // {
-                        //     "order_from": 1,
+                        // { // ORDER DARI ADMIN 2
+                        //     "order_from": 2,
                         //     "customer_id": 1,
                         //     "order_data": {
-                        //         "product_id": 3,
-                        //         "quantity": 10,
+                        //         {
+                        //             "product_id": 3,
+                        //             "quantity": 1,
+                        //         },
+                        //         {
+                        //             "product_id": 1,
+                        //             "quantity": 5,
+                        //         }
                         //     }
-                        // },
-                        // {
-                        //     "order_from": 2,
-                        //     "order_data": {
-                        //     "product_id": 4,
-                        //     "quantity": 4,
-                        //     }
-                        // },  
+                        // }
 
                     ]
                 },
@@ -84,33 +89,37 @@
                         $("#result-type").val(type);
                         $("#result-data").val(JSON.stringify(data));
                         $("#order_data").val(JSON.stringify({
-                            "orders": [
-                                {
-                                    "order_from": 1,
+                            "orders": [ //ORDER DIKELOMPOKKAN BERDASARKAN ADMIN ID
+                                { // ORDER DARI ADMIN 1
+                                   "order_from": 1,
                                     "customer_id": 1,
-                                    "order_data": {
-                                        "product_id": 3,
-                                        "quantity": 1,
-                                    }
+                                    "order_data": [{ // DETAIL PRODUK dari ADMIN ID 1
+                                            "product_id": 3,
+                                            "quantity": 1,
+                                        }, 
+                                        { // DETAIL PRODUK 2 dari ADMIN ID 1
+                                            "product_id": 1,
+                                            "quantity": 5,
+                                        }
+                                    ]
                                 },
-                                // {
-                                //     "order_from": 1,
+                                // { // ORDER DARI ADMIN 2
+                                //     "order_from": 2,
                                 //     "customer_id": 1,
                                 //     "order_data": {
-                                //         "product_id": 3,
-                                //         "quantity": 10,
+                                //         {
+                                //             "product_id": 3,
+                                //             "quantity": 1,
+                                //         },
+                                //         {
+                                //             "product_id": 1,
+                                //             "quantity": 5,
+                                //         }
                                 //     }
-                                // },
-                                // {
-                                //     "order_from": 1,
-                                //     "order_data": {
-                                //     "product_id": 4,
-                                //     "quantity": 4,
-                                //     }
-                                // },  
+                                // }
 
                             ]
-                        }))
+                        }, ))
 
                         //resultType.innerHTML = type;
                         //resultData.innerHTML = JSON.stringify(data);
@@ -124,6 +133,7 @@
                             console.log(result);
                             $("#payment-form").submit();
                         },
+                        
                         onPending: function (result) {
                             changeResult('pending', result);
                             console.log(result.status_message);

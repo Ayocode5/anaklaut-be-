@@ -54,14 +54,7 @@ class Admin extends Authenticatable
     }
 
     // Relasi ke Model Produk & Model Produk Gallery
-    public function product_galleries() {
-        return $this->hasManyThrough(
-            ProductGallery::class, 
-            Product::class, 
-            'owned_by', 
-            'product_id', 
-            'id', 
-            'id'
-        );
+    public function product() {
+        return $this->hasMany(Product::class, 'owned_by', 'id');
     }
 }

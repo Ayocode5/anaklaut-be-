@@ -24,8 +24,8 @@ class TransactionDetails implements Transactions {
     public function findTransactionDetailsByAdminId($id)
     {
          // GET DATA ORDERS BY ADMIN ID
-         $data = Order::with(['transaction', 'order_details'])->where('order_from', $id)->get();
-
+         $data = Order::with(['transaction', 'order_details'])->where('order_from', $id)->orderBy("created_at", "DESC")->take(20)->get();
+         
          if (count($data) > 0) {
  
              foreach ($data as $key => $value) {
@@ -37,9 +37,9 @@ class TransactionDetails implements Transactions {
              foreach ($order_details as $key => $value) {
                  foreach ($value as $key2 => $value2) {
                      if($value2->product_id != null) {
-                         // Mengambil semua produk berdasarkan yg ada pada ORDER_DETAILS RECORD
-                         // Lalu setiap data ORDER_DETAILS dikelompokkan berdasarkan order_id yang
-                         // dimiliki ORDER_DETAILS
+                         // Mengambil semua produk berdasarkan yg ada pada RECORD ORDER_DETAILS
+                         // Lalu setiap RECORD ORDER_DETAILS dikelompokkan berdasarkan order_id 
+                         // (Order id sebagai array key) yang dimiliki ORDER_DETAILS
                          $transactionDetails[strval($order_details[$key][$key2]->order_id)]["detail_products"][] = Product::with(['product_galleries'])->where('id', $value2->product_id)->get();
                          $transactionDetails[strval($order_details[$key][$key2]->order_id)]["transaction_data"][] = $transactions[$key];
                          $transactionDetails[strval($order_details[$key][$key2]->order_id)]["order_quantities"][] = $value2->order_quantity;
@@ -84,12 +84,12 @@ class TransactionController extends Controller
         return view('pages.checkout');
     }
 
-    public function statusTransaction($orderId) {
+    public function status($orderId) {
        $status =  \Midtrans\Transaction::status($orderId);
        dd($status);
     }
 
-    public function refundTransaction($orderId) {
+    public function refund($orderId) {
         $params = array(
             'refund_key' => 'order1-ref1',
             'amount' => 50000,
@@ -98,6 +98,14 @@ class TransactionController extends Controller
         $status =  \Midtrans\Transaction::refund($orderId, $params);
         dd($status);
     }
+
+    public function approve($orderId) {
+        $status =  \Midtrans\Transaction::approve($orderId);
+        dd($status);
+    }
+
+
+
 
     //API
     public function token(Request $request)

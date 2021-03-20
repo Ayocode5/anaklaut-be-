@@ -49,6 +49,7 @@ class AdminController extends Controller
                 $income = $collection->pipe(function ($collection) {
                     return $collection->sum();
                 });
+
             } catch (\Throwable $th) {
                 error_log("ERROR: Qalculating total amount failed, it seems like there's no transaction with status_code 200");
                 Log::info("ERROR: Qalculating total amount failed, it seems like there's no transaction with status_code 200");
@@ -56,8 +57,7 @@ class AdminController extends Controller
             }
             // END OF CALCULATE TOTAL AMOUNT OF MONEY
             
-            // GET PRODUCT WHICH IS SUCCESS ORDERED
-
+            // GET PRODUCT WHICH IS SUCCESFULLY ORDERED
             try {
                 foreach ($success_ordered as $key => $value) {
                     foreach ($value as $key => $value2) {
@@ -66,6 +66,7 @@ class AdminController extends Controller
                        $products["order_quantity"][] = $value2->order_quantity;
                     }
                 } 
+
             } catch (\Throwable $th) {
                 //throw $th;
                 $products["product"] = array();
@@ -99,6 +100,7 @@ class AdminController extends Controller
                 "products" => $products["product"],
                 "orders_quantity" => $products["order_quantity"],
             ]);
+            
         } else {
             return response()->json([
                 "status" => 500,

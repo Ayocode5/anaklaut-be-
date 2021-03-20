@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\Product;
 use App\Models\Admin;
@@ -12,6 +13,7 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\Shipment;
 use App\Models\Transaction;
+use App\Models\User;
 
 
 interface Midtrans
@@ -34,55 +36,40 @@ class MidtransPayment implements Midtrans
     public function request_token($request)
     {
 
-        // error_log("*** Starting Request Midtrans SNAP TOKEN from AJAX ***");
-
         $orders = $request->input('orders');
-        foreach ($orders as $key => $value) {
-            //value order_from dijadikan array key untuk value dari order_data
-            $order_in[$value['order_from']][] = $value['order_data'];
-            try {
-                // GET PRODUCT FROM DATABASE BASED ON INPUT JSON
-                $product["items"][] = Product::findOrFail(intval($value['order_data']['product_id']));
-                // SET PRODUCT QUANTITY ORDERS
-                $product["quantity"][] = $value['order_data']['quantity'];
-                Log::info("*** Query produk berhasil");
-                error_log("*** Query produk id ".$value['order_data']['product_id']." berhasil");
 
-            } catch (\Throwable $th) {
-                // throw $th;
-                Log::info($th);
+        try { // MENYIAPKAN DETAIL PRODUK SESUAI INPUT PEMESAN
+            error_log("*** Menyiapkan detail produk order");
+            Log::debug("*** Menyiapkan detail produk order");
+
+            // START QUERYING PRODUCTS
+            foreach ($orders[0]["order_data"] as $key => $value) {
+                $product["items"][] = Product::find($value["product_id"]);  // GET PRODUCT FROM DATABASE BASED ON INPUT JSON
+                $product["quantity"][] = $value["quantity"]; // SET PRODUCT QUANTITY ORDERS
+
+                Log::info("*** Query produk id " . $value["product_id"] . " berhasil");
+                error_log("*** Query produk id " . $value["product_id"] . " berhasil");
             }
+        } catch (\Throwable $th) {
+            Log::error($th);
+            error_log("*** Query produk gagal");
         }
 
-        //BARANG HASIL INPUT
-        // Log::info("BARANG PESANAN MASUK");
-        // Log::info($order_in);
+        //MENGAMBIL DETAIL ADMIN
+        $admin = Admin::findOrFail($orders[0]["order_from"]);
 
-        //GET KEYS OF ARRAY
-        // Log::info("PESAN DARI ADMIN ID ...");
-        $orderFrom = array_keys($order_in);
-
-        //GET ADMIN BY IT'S ID
-        $admin = Admin::findOrFail($orderFrom[0]);
-
-        // MENYIAPKAN ARRAY ORDER DETAIL UNTUK KEMUDIAN DI PROSES OLEH MIDTRANS
-        error_log("*** Menyiapkan array order details");
+        error_log("*** Menyiapkan midtrans standard array order details");
         foreach ($product["items"] as $key => $value) {
+            // MENYIAPKAN ARRAY ORDER DETAIL UNTUK KEMUDIAN DI PROSES OLEH MIDTRANS
             $item_order_detials[] = array(
                 'id' => $value->id,
                 'price' => $value->price,
                 'quantity' => $product['quantity'][$key],
                 'name' => $value->name
             );
-        }
-        // END OF MENYIAPKAN ARRAY ORDER DETAIL UNTUK KEMUDIAN DI PROSES OLEH MIDTRANS
+        } // END OF MENYIAPKAN ARRAY ORDER DETAIL UNTUK KEMUDIAN DI PROSES OLEH MIDTRANS
 
-        Log::info("ITEM ORDER DETAILS >> " . count($item_order_detials));
-        // Log::info($item_order_detials);
-
-        // error_log('masuk ke snap token dri ajax');
-
-        $time = time();
+        $time = time(); //GET CURRENT TIME
         $params = array(
             'transaction_details' => array(
                 'order_id' => uniqid("IYN"),
@@ -154,9 +141,10 @@ class MidtransPayment implements Midtrans
             'item_details' => $item_order_detials
         );
 
-        try { //Return snap token if success
+        try { //Return snap token to snap.js if success
+
             $snapToken = \Midtrans\Snap::getSnapToken($params);
-            error_log("*** Midtrans Snap Token Has Been Sent!");
+            error_log("*** Midtrans snap token has been sent to snap.js!");
             return $snapToken;
         } catch (\Throwable $err) {
             return $err;
@@ -167,22 +155,26 @@ class MidtransPayment implements Midtrans
 
     public function checkout_finish($request)
     {
-        // dd($request);
         $orders = $request->input('order_data');
 
-        $orders = json_decode($orders, true);
+        // $orders = json_decode($orders, true); << WARNING: Enable This Line If Json Data Stringified
         $orders = $orders['orders'];
 
-        if (!empty($orders) || $orders != null) {
-            error_log("=================");
-            error_log("= Orders Found! =");
-            error_log("=================");
-            Log::info("Orders Found!");
-        }
-
-        // TO ARRAY JSON result_data
+        // GET TRANSACTIONS INFO FROM MIDTRANS
         $result = $request->input('result_data');
-        $result = ((array) json_decode($result));
+        // $result = ((array) json_decode($result)); << WARNING: Enable This Line If Json Data Stringified
+
+        // CHECK REQUIRED DATA
+        if (!empty($orders) || $orders != null || !empty($result) || $result != null) {
+            error_log("*** Orders Found!");
+            Log::info("*** Orders Found!");
+        } else {
+            error_log("*** Required data is not exists");
+            return response()->json([
+                "message" => "Required data is not exists",
+                "status" => 400
+            ]);
+        }
 
         // TRY TO GET VIRTUAL NUMBER/Nomer Rek BANK
         try {
@@ -194,92 +186,94 @@ class MidtransPayment implements Midtrans
             ];
         }
 
-        //Create new Order
+        //DO CREATE NEW ORDER
         try {
             //code...
+            DB::transaction(function () use ($result, $orders, $va_number) {
 
-            $newOrder = new Order;
-            $newOrder->id = $result['order_id'];
-            $newOrder->order_from = intval($orders[0]["order_from"]); //DATA STATIS
-            $newOrder->customer_id = intval($orders[0]["customer_id"]); //DATA STATIS
-            $newOrder->status = $result['transaction_status'];
+                $newOrder = new Order;
+                $newOrder->id = $result['order_id'];
+                $newOrder->order_from = intval($orders[0]["order_from"]); //DATA STATIS
+                $newOrder->customer_id = intval($orders[0]["customer_id"]); //DATA STATIS
+                $newOrder->status = $result['transaction_status'];
+                $newOrder->save();
 
+                if ($newOrder) {
 
-            if (true) {
+                    //Create New Order Details (expect an array)
+                    foreach ($orders[0]["order_data"] as $key => $value) {
+                        
+                        $orderDetails = OrderDetail::create([
+                            'order_id' => $result['order_id'],
+                            'product_id' => $value["product_id"],
+                            'order_quantity' => $value["quantity"]
+                        ]);
 
-                //Create New Order Details (expect an array)
-                for ($i = 0; $i < count($orders); $i++) {
+                        if ($orderDetails) {
+                            Log::info("*** Order details " . $key . " created successfully");
+                            error_log("*** Order details " . $key . " created successfully");
+                        }
+                    }
 
-                    $orderDetails =  OrderDetail::create([
-                        'product_id' => $orders[$i]["order_data"]['product_id'],
-                        'order_quantity' => $orders[$i]["order_data"]['quantity'],
-                        'order_id' => $result['order_id']
+                    // GET USER INFORMATION & USE IT IN SHIPMENT DATA
+                    $customer = DB::table('users')->where('id',  $orders[0]['customer_id'])->first();
+
+                    // Create New Shipment 
+                    $shipment = Shipment::create([ //DATA PENGIRIMAN MASIH STATIS
+                        'order_id' => $result['order_id'],
+                        'first_name'    => $customer->name,
+                        // 'last_name'     => "1",
+                        'email'         => $customer->email,
+                        'phone'         => '08111222333',
+                        'address'       => "Bakerstreet 221B.",
+                        'city'          => "Jakarta",
+                        'postal_code'   => "51162",
+                        'country_code'  => 'IDN'
                     ]);
+                    if ($shipment) {
+                        error_log("*** Shipment created successfully");
+                        Log::info("*** Shipment created successfully");
+                    }
 
-                    //  dd($orderDetails);
+                    //Create New Transaction
+                    $newTransaction = new Transaction;
+                    $newTransaction->id = $result['transaction_id'];
+                    $newTransaction->order_id = $result['order_id'];
+                    $newTransaction->status_code = $result['status_code'];
+                    $newTransaction->status_message = $result['status_message'];
+                    $newTransaction->transaction_time = $result['transaction_time'];
+                    $newTransaction->transaction_status = $result['transaction_status'];
+                    $newTransaction->fraud_status = $result['fraud_status'];
+                    $newTransaction->pdf_url = $result['pdf_url'];
+                    $newTransaction->save();
 
-                    if ($orderDetails) {
-                        error_log("*** Order details created successfully");
+                    if ($newTransaction) {
+                        error_log("*** Transaction created successfully");
+                        // Create new Payment
+                        $newTransaction->payment()->create([
+                            'transaction_id' => $newTransaction->id,
+                            'payment_type' => $result['payment_type'],
+                            'va_number' => $va_number['va_number'],
+                            'bank' => $va_number['bank'],
+                            'gross_amount' => $result['gross_amount']
+                        ]);
                     }
                 }
-                // foreach ($orders as $key => $value) {
-                // }
+            });
 
-                // Create New Shipment 
-                $shipment = Shipment::create([ //DATA PENGIRIMAN MASIH STATIS
-                    'order_id' => $result['order_id'],
-                    'first_name'    => "customer",
-                    'last_name'     => "1",
-                    'email'         => 'customer@example.com',
-                    'phone'         => '08111222333',
-                    'address'       => "Bakerstreet 221B.",
-                    'city'          => "Jakarta",
-                    'postal_code'   => "51162",
-                    'country_code'  => 'IDN'
-                ]);
-                if ($shipment) {
-                    error_log("*** Shipment created successfully");
-                }
-
-                //Create New Transaction
-                $newTransaction = new Transaction;
-                $newTransaction->id = $result['transaction_id'];
-                $newTransaction->order_id = $result['order_id'];
-                $newTransaction->status_code = $result['status_code'];
-                $newTransaction->status_message = $result['status_message'];
-                $newTransaction->transaction_time = $result['transaction_time'];
-                $newTransaction->transaction_status = $result['transaction_status'];
-                $newTransaction->fraud_status = $result['fraud_status'];
-                $newTransaction->pdf_url = $result['pdf_url'];
-                $newTransaction->save();
-
-                if ($newTransaction) {
-                    error_log("*** Transaction created successfully");
-                    // Create new Payment
-                    $newTransaction->payment()->create([
-                        'transaction_id' => $newTransaction->id,
-                        'payment_type' => $result['payment_type'],
-                        'va_number' => $va_number['va_number'],
-                        'bank' => $va_number['bank'],
-                        'gross_amount' => $result['gross_amount']
-                    ]);
-                }
-            }
-            $newOrder->save();
-
-            return response()->json(
-                "Order Success",
-                200
-            );
-
+            return  response()->json([
+                "message" => "Menyimpan detail order baru success",
+                "status" => 200
+            ]);
+        
         } catch (\Throwable $th) {
-            return response()->json(
-                "Order Failed"
-            );
+            
+            Log::error($th);
+            return  response()->json([
+              "message" => "Menyimpan detail order baru gagal",
+              "status" => 401
+            ]);
         }
-
-
-        return "order berhasil";
     }
 
     public function notification_transaction($request)
@@ -293,8 +287,8 @@ class MidtransPayment implements Midtrans
 
         error_log("*** Notification from Order ID >> $notif->order_id ****");
 
-        error_log("Order ID = $notif->order_id: " . "transaction status = $transaction, fraud staus = $fraud" . 
-        " Trans ID = $transaction_id" . " Status code = $status_code" . " Status Message = $notif->status_message");
+        error_log("Order ID = $notif->order_id: " . "transaction status = $transaction, fraud staus = $fraud" .
+            " Trans ID = $transaction_id" . " Status code = $status_code" . " Status Message = $notif->status_message");
 
         // TRANSAKSI SUKSES
         if ($transaction == 'settlement') {
@@ -308,10 +302,11 @@ class MidtransPayment implements Midtrans
 
                 return response()->json(
                     [
-                    'status_code' => $status_code,
-                    'transaction_status' => $transaction,
-                    'status_message' => 'Transaksi berhasil'
-                    ], 200
+                        'status_code' => $status_code,
+                        'transaction_status' => $transaction,
+                        'status_message' => 'Transaksi berhasil'
+                    ],
+                    200
                 );
 
                 // Get Product ID and then decrease the quantity of the Product
@@ -326,7 +321,6 @@ class MidtransPayment implements Midtrans
                     throw $th;
                     Log::info('ERROR: decrementing failed');
                 }
-
             } else if ($fraud == 'accept') {
                 // TODO Set payment status in merchant's database to 'success'
                 Transaction::where('id', strval($transaction_id))->update([
@@ -337,10 +331,11 @@ class MidtransPayment implements Midtrans
 
                 return response()->json(
                     [
-                    'status_code' => $status_code,
-                    'transaction_status' => $transaction,
-                    'status_message' => 'Transaksi berhasil'
-                    ], 200
+                        'status_code' => $status_code,
+                        'transaction_status' => $transaction,
+                        'status_message' => 'Transaksi berhasil'
+                    ],
+                    200
                 );
 
                 // Get Product ID and then decrease the quantity of the Product
@@ -366,10 +361,11 @@ class MidtransPayment implements Midtrans
                 ]);
                 return response()->json(
                     [
-                    'status_code' => $status_code,
-                    'transaction_status' => $transaction,
-                    'status_message' => 'gagal'
-                    ], $status_code
+                        'status_code' => $status_code,
+                        'transaction_status' => $transaction,
+                        'status_message' => 'gagal'
+                    ],
+                    $status_code
                 );
             } else if ($fraud == 'accept') {
                 // TODO Set payment status in merchant's database to 'failure'
@@ -380,10 +376,11 @@ class MidtransPayment implements Midtrans
                 ]);
                 return response()->json(
                     [
-                    'status_code' => $status_code,
-                    'transaction_status' => $transaction,
-                    'status_message' => 'Transaksi gagal'
-                    ], $status_code
+                        'status_code' => $status_code,
+                        'transaction_status' => $transaction,
+                        'status_message' => 'Transaksi gagal'
+                    ],
+                    $status_code
                 );
             }
         } else if ($transaction == 'deny') { // TRANSAKSI DESY
@@ -395,10 +392,11 @@ class MidtransPayment implements Midtrans
             ]);
             return response()->json(
                 [
-                'status_code' => $status_code,
-                'transaction_status' => $transaction,
-                'status_message' => 'Transaksi gagal'
-                ], $status_code
+                    'status_code' => $status_code,
+                    'transaction_status' => $transaction,
+                    'status_message' => 'Transaksi gagal'
+                ],
+                $status_code
             );
         } else if ($transaction == 'expire') { // TRANSAKSI EXPIRE
             if ($fraud == 'challenge') {
@@ -410,10 +408,11 @@ class MidtransPayment implements Midtrans
                 ]);
                 return response()->json(
                     [
-                    'status_code' => $status_code,
-                    'transaction_status' => $transaction,
-                    'status_message' => 'Transaksi expired'
-                    ], $status_code
+                        'status_code' => $status_code,
+                        'transaction_status' => $transaction,
+                        'status_message' => 'Transaksi expired'
+                    ],
+                    $status_code
                 );
             } else if ($fraud == 'accept') {
                 // TODO Set payment status in merchant's database to 'failure'
@@ -424,10 +423,11 @@ class MidtransPayment implements Midtrans
                 ]);
                 return response()->json(
                     [
-                    'status_code' => $status_code,
-                    'transaction_status' => $transaction,
-                    'status_message' => 'Transaksi expired'
-                    ], $status_code
+                        'status_code' => $status_code,
+                        'transaction_status' => $transaction,
+                        'status_message' => 'Transaksi expired'
+                    ],
+                    $status_code
                 );
             }
         }
@@ -455,30 +455,32 @@ class TransactionController extends Controller
 
     public function token(Request $request)
     {
-        error_log(sprintf($this->colorFormat['green'], "INFO: Starting Request Midtrans SNAP TOKEN from AJAX"));
+        error_log(sprintf($this->colorFormat['green'], "INFO: Starting Request Midtrans SNAP TOKEN from snap.js"));
         try {
             //code...
             $midtrans = new MidtransPayment;
             $midtransToken = $midtrans->request_token($request);
-            
+
             Log::info("Midtrans SNAP TOKEN >> " . $midtransToken);
-            
+
             return response()->json(
                 ["token" => $midtransToken],
                 200
             );
 
         } catch (\Throwable $th) {
+
             error_log(sprintf($this->colorFormat['red'], "ERROR: Getting Midtrans SNAP TOKEN FAILED"));
             Log::info($th);
-            return response()->json(
-               $th
-            );
+
+            return ["token" => 'invalid-token'];
         }
     }
 
     public function finish(Request $request)
-    {
+    {   
+
+        // Log::debug($request); die;
         try {
             //code...
             error_log(sprintf($this->colorFormat['green'], "INFO: Saving order into database"));
@@ -486,18 +488,19 @@ class TransactionController extends Controller
             $checkoutFinish = $midtrans->checkout_finish($request);
 
             return $checkoutFinish;
-            
+
         } catch (\Throwable $th) {
             error_log(sprintf($this->colorFormat['red'], "ERROR: Failed saving order into database"));
-            return response()->json(
-                $th
-            );
+            Log::error($th);
+
+            return "Failed saving order into database";
         }
     }
 
     public function notification(Request $request)
     {
         try {
+
             error_log(sprintf($this->colorFormat['green'], "INFO: New Notification"));
             $midtrans = new MidtransPayment;
             $notif = $midtrans->notification_transaction($request);
@@ -506,11 +509,18 @@ class TransactionController extends Controller
             return;
 
         } catch (\Throwable $th) {
+
             error_log(sprintf($this->colorFormat['red'], "INFO: Failed Listening new Notification"));
-            return response()->json(
-                $th
-            );
+            Log::error($th);
         }
     }
-
+    
+    public function status($orderId) {
+        $status =  \Midtrans\Transaction::status($orderId);
+        if(!empty($status)) {
+            return ResponseFormatter::success($status, 200, "Success, transaction is found");
+        }
+        return ResponseFormatter::error($status);
+        // return ResponseFormatter::success($status);
+    }
 }

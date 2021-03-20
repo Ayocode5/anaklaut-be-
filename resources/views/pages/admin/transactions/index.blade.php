@@ -7,13 +7,19 @@
         @if (!empty($order_keys))
         @foreach ($order_keys as $keyOrder)
         <div class="col-sm-12 col-md-12 col-lg-11 col-xl-12">
-            <div class="card border-left-primary mb-3 shadow" style="max-width: 100%;">
+            @if ($products[$keyOrder]["transaction_data"][0]->status_code == 200)
+                <div class="card border-left-success mb-3 shadow" style="max-width: 100%;">
+            @elseif ($products[$keyOrder]["transaction_data"][0]->status_code == 201)
+                <div class="card border-left-warning mb-3 shadow" style="max-width: 100%;">
+            @elseif($products[$keyOrder]["transaction_data"][0]->status_code == 407)
+                <div class="card border-left-danger mb-3 shadow" style="max-width: 100%;">    
+            @endif
                 <div class="card-header">ORDER ID: {{ $keyOrder }} <br>  <small>Waktu Pemesanan: {{ $products[$keyOrder]["transaction_data"][0]->created_at }}</small></div>
                 <div class="card-body text-secondary">
                     @foreach ($products[$keyOrder]["detail_products"] as $product)    
                     <div class="row mb-2">
                         <div class="col col-sm-4 col-md-4 col-lg-3">
-                            <img class="rounded shadow" style="height: 100%; width:100%;"
+                            <img class="border border-secondary rounded shadow" style="height: 100%; width:100%;"
                                 src="{{ $product[0]->product_galleries[0]->image }}"
                                 alt="">
                         </div>
@@ -45,9 +51,9 @@
                                     Refund
                                 </button>
                             </form>
-                            <button class="btn btn-primary float-right ml-2">
+                            <a href="{{ route('approve.transaction', $keyOrder) }}" class="btn btn-primary float-right ml-2">
                                 Approve
-                            </button>
+                            </a>
                             @endif
                             {{-- <a href="" class="btn btn-info float-right ml-2">
                                 Detail

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Auth\Events\Registered;
+use SebastianBergmann\Environment\Console;
 
 class RegisterController extends Controller
 {
@@ -54,15 +55,29 @@ class RegisterController extends Controller
         ]);
 
         $user = $this->create($data);
-        
-        event(new Registered($user));
 
-        Auth::guard('admin')->login($user);
+        //LOGIN AFTER NEW USER REGISTERED SUCCESSFULY
+        if($user) {
 
-        return $this->registered($request, $user)
-            ?: redirect($this->redirectPath());
-        
-        // return redirect()->route('admin.dashboard');
+            error_log(sprintf($this->colorFormat['green'], 'INFO: NEW ADMIN SUCCESFULLY CREATED'));
+            event(new Registered($user));
+
+            try {
+
+                error_log(sprintf($this->colorFormat['yellow'], 'LOGIN ATTEMPT FROM ADMIN: ' . $request->input('email')));
+                Auth::guard('admin')->loginUsingId($user->id);
+
+                return redirect()->route('admin.dashboard');
+
+            } catch (\Throwable $th) {
+                return $th;
+            }
+
+        }
+
+        if(!$user) {
+            return "Failed create new account";
+        }
         
     }
 
@@ -74,10 +89,5 @@ class RegisterController extends Controller
             'password' => Hash::make($data['password']),
         ]);
         
-    }
-
-    protected function registered(Request $request, $user)
-    {
-        return Auth::loginUsingId($user->id);
     }
 }

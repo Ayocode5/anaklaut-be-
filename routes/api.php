@@ -14,10 +14,24 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+// Route::middleware('auth:api')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
+Route::group(['middleware' => 'api','prefix' => 'auth'], function ($router) {
+
+    Route::post('login', [App\Http\Controllers\API\AuthControllerAPI::class, 'login']);
+    Route::post('logout', [App\Http\Controllers\API\AuthControllerAPI::class, 'logout']);
+    Route::post('register', [App\Http\Controllers\API\AuthControllerAPI::class, 'register']);
+    Route::post('refresh', [App\Http\Controllers\API\AuthControllerAPI::class, 'refresh']);
+    Route::get('me', [App\Http\Controllers\API\AuthControllerAPI::class, 'me']);
 });
 
-Route::post('/v1/payment/token', [\App\Http\Controllers\API\TransactionController::class, 'token'])->name('api.payment.token');
-Route::post('/v1/payment/finish', [\App\Http\Controllers\API\TransactionController::class, 'finish'])->name('api.payment.finish');
-Route::post('/v1/payment/notification', [\App\Http\Controllers\API\TransactionController::class, 'notification'])->name('api.payment.notification');
+Route::group(["prefix" => "v1"], function () {
+    
+    Route::get('/products', [\App\Http\Controllers\API\ProductController::class, "all"]);
+
+    Route::post('/transaction/token', [\App\Http\Controllers\API\TransactionController::class, 'token'])->name('api.payment.token');
+    Route::post('/transaction/finish', [\App\Http\Controllers\API\TransactionController::class, 'finish'])->name('api.payment.finish');
+    Route::post('/transaction/notification', [\App\Http\Controllers\API\TransactionController::class, 'notification'])->name('api.payment.notification');
+    Route::get('/transaction/{orderId}/status', [\App\Http\Controllers\API\TransactionController::class, 'status']);
+});
