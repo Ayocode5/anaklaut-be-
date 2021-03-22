@@ -85,8 +85,14 @@ class TransactionController extends Controller
     }
 
     public function status($orderId) {
-       $status =  \Midtrans\Transaction::status($orderId);
-       dd($status);
+        try {
+            //code...
+            $status =  \Midtrans\Transaction::status($orderId);
+            return view('pages.admin.transactions.status', compact('status'));
+
+        } catch (\Throwable $th) {
+            return abort(403, $th->getMessage());
+        }
     }
 
     public function refund($orderId) {

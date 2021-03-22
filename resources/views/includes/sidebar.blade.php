@@ -61,11 +61,10 @@
         Reviews
     </div>
 
-    <!-- Nav Item - Charts -->
-    <li class="nav-item">
-        <a class="nav-link" href="charts.html">
+    <li class="nav-item {{ request()->is('admin/reviews') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ url('/admin/reviews') }}">
             <i class="fas fa-star"></i>
-            <span>Kata Pembeli</span></a>
+            <span>Review Pembeli</span></a>
     </li>
 
     <!-- Divider -->

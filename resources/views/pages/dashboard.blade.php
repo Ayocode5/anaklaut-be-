@@ -280,6 +280,7 @@
             } else if (transaction.status_code == 407) {
                 transactionFailed++
             }
+            // console.log(transaction)
         });
 
         $(".transaction_success").text(transactionSuccess)

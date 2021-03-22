@@ -16,7 +16,8 @@ use Illuminate\Support\Facades\Auth;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    // return view('welcome');
+    return redirect('/admin');
 });
 
 Auth::routes();
@@ -49,6 +50,9 @@ Route::group(['prefix' => 'admin'], function(){
 
     // Order
     Route::get('/orders', [App\Http\Controllers\OrderController::class, 'index']);
+
+    // Review
+    Route::get('/reviews', [App\Http\Controllers\ReviewController::class, 'index']);
     
     // Midtrans Gateway Test
     Route::get('/transactions', [\App\Http\Controllers\TransactionController::class, 'index']);
@@ -57,7 +61,7 @@ Route::group(['prefix' => 'admin'], function(){
     Route::post('/transaction/{orderId}/refund', [\App\Http\Controllers\TransactionController::class, 'refund'])->name("refund.transaction");
 });
 
-Route::get('/payment', [\App\Http\Controllers\TransactionController::class, 'checkout'])->name('payment');
-Route::post('/payment/token', [\App\Http\Controllers\TransactionController::class, 'token'])->name('payment.token');
-Route::post('/payment/finish', [\App\Http\Controllers\TransactionController::class, 'finish'])->name('payment.finish');
-Route::post('/payment/notification', [\App\Http\Controllers\TransactionController::class, 'notification']);
+// Route::get('/payment', [\App\Http\Controllers\TransactionController::class, 'checkout'])->name('payment');
+// Route::post('/payment/token', [\App\Http\Controllers\TransactionController::class, 'token'])->name('payment.token');
+// Route::post('/payment/finish', [\App\Http\Controllers\TransactionController::class, 'finish'])->name('payment.finish');
+// Route::post('/payment/notification', [\App\Http\Controllers\TransactionController::class, 'notification']);

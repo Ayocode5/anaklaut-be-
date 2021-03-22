@@ -61,9 +61,8 @@
                     <div class="">
                         <div class="p-5">
                             <div class="text-center">
-                                <h1 class="h4 text-gray-900 mb-2">Forgot Your Password?</h1>
-                                <p class="mb-4">We get it, stuff happens. Just enter your email address below
-                                    and we'll send you a link to reset your password!</p>
+                                <h1 class="h4 text-gray-900 mb-2">Lupa Password?</h1>
+                                <p class="mb-4">Masukkan email kamu!, kami akan mengirimkan link untuk mereset password akun anda.</p>
                             </div>
                             @if (session('status'))
                             <div class="alert alert-success" role="alert">
@@ -90,10 +89,10 @@
                             </form>
                             <hr>
                             <div class="text-center">
-                                <a class="small" href="{{ route('admin.register') }}">Create an Account!</a>
+                                <a class="small" href="{{ route('admin.register') }}">Buat Akun!</a>
                             </div>
                             <div class="text-center">
-                                <a class="small" href="{{ route('admin.login') }}">Already have an account? Login!</a>
+                                <a class="small" href="{{ route('admin.login') }}">Kamu sudah memiliki akun? Login!</a>
                             </div>
                         </div>
                     </div>

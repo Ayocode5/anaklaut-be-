@@ -47,7 +47,7 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="formGroupExampleInput2">Berat (gram)</label>
+                                <label for="formGroupExampleInput2">Berat (KG)</label>
                                 <input id="weight" name="weight" type="number"
                                     class="@error('weight') is-invalid @enderror form-control"
                                     value="{{ old('weight') ?  old('weight') :  $product->weight }}" placeholder="1000">
@@ -58,8 +58,8 @@
                                 @enderror
                             </div>
                         </div>
-                        <div class="col-6 d-flex justify-content-center">
-                            <img class="rounded shadow" src="{{ $product->product_galleries[0]->image }}" style="height: 94%; width: 84%">
+                        <div class="col-6 d-flex p-0 justify-content-center">
+                            <img class="rounded shadow" src="{{ $product->product_galleries[0]->image }}" style="height: 290px; width: 84%">
                         </div>
                     </div>
 
@@ -76,7 +76,7 @@
                         @enderror
                     </div>
                     <div class="form-group">
-                        <label for="formGroupExampleInput2">Harga (kilo)</label>
+                        <label for="formGroupExampleInput2">Harga/KG</label>
                         <input value="{{ old('price') ? old('price') : $product->price }}" id="price" name="price"
                             type="number" class="@error('price') is-invalid @enderror form-control" placeholder="5000">
                         @error('price')
@@ -108,7 +108,7 @@
                         @enderror
                     </div>
                     <div class="form-group">
-                        <label for="formGroupExampleInput2">Stok (kg)</label>
+                        <label for="formGroupExampleInput2">Stok</label>
                         <input value="{{ old('stock') ? old('stock') : $product->stock }}" id="stock" name="stock"
                             type="number" class="@error('stock') is-invalid @enderror form-control" placeholder="20">
                         @error('stock')

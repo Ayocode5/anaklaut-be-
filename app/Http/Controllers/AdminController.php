@@ -28,32 +28,38 @@ class AdminController extends Controller
         $admin = Auth::guard('admin')->user()->id;
 
         $data = Order::with(['transaction' => function ($q) {
-            $q->where('status_code', '=', 200);
-        }])->where('order_from', $admin)->get();
+            $q->with('payment')->where('status_code', '=', 200);
+        }])->where('order_from', $admin)->orderBy('created_at')->get();
 
         $transaction = Order::with(['transaction'])->where("order_from", $admin)->orderBy("created_at", "DESC")->get();
 
+        // dd($data);
+        $x = $transaction->map(function($item, $key){
+            return $item->transaction;
+        });
+        
         if (count($data) > 0) {
 
-            // CALCULATE TOTAL AMOUNT OF MONEY
             try {
+                $income = 0;
                 foreach ($data as $key => $value) {
                     if ($value->transaction != null) {
-                        $income[] = $value->transaction->payment->gross_amount;
+
+                        //hitung income
+                        $income += $value->transaction->payment->gross_amount;
                         // Produk yang suskes diorder disimpan ke array $success_ordered
                         $success_ordered[] = $value->order_details;
                     } 
                 }
                 
-                $collection = collect($income);
-                $income = $collection->pipe(function ($collection) {
-                    return $collection->sum();
-                });
-
+            // dd($transactions);
             } catch (\Throwable $th) {
+
                 error_log("ERROR: Qalculating total amount failed, it seems like there's no transaction with status_code 200");
                 Log::info("ERROR: Qalculating total amount failed, it seems like there's no transaction with status_code 200");
+
                 $income = 0;
+                $success_ordered = [];
             }
             // END OF CALCULATE TOTAL AMOUNT OF MONEY
             
@@ -77,25 +83,10 @@ class AdminController extends Controller
             }
             // END OF GET PRODUCT
     
-            // GET ALL TRANSACTION BASED ON ADMIN ID
-            try {
-                //code...
-                foreach ($transaction as $key => $value) {
-                    $transactions[] = $value->transaction;
-                }
-            } catch (\Throwable $th) {
-                //throw $th;
-                error_log("Querying transaction failed it seems the records are empty");
-                Log::info("Querying transaction failed it seems the records are empty");
-                $transactions = array(); //empty array given
-                
-            }
-            //END OF GET ALL TRANSACTION BASED ON ADMIN ID
 
             return response()->json([
-                "status" => 200,
                 "income" => $income,//
-                "transactions"  => $transactions,
+                "transactions"  => $x->all(),
                 "orders_id" => $products["order_id"],
                 "products" => $products["product"],
                 "orders_quantity" => $products["order_quantity"],

@@ -15,8 +15,8 @@
                             <div class="card">
                                 <div class="card-body px-0 py-0">
                                     {{-- <div class="col-2"> --}}
-                                    <img class="border border-primary rounded" style="height: 154px; width: 100%;" class=""
-                                        src="{{ $gallery->image }}" alt="Card image cap">
+                                    <img class="border border-primary rounded" style="height: 154px; width: 100%;"
+                                        class="" src="{{ $gallery->image }}" alt="Card image cap">
                                     {{-- </div> --}}
                                 </div>
                             </div>
@@ -36,9 +36,9 @@
                                         data-remote="{{ route('product.detail', $product->id) }}">
                                         <i class="fas fa-info-circle"></i>
                                     </button>
-                                    <a class="btn btn-circle btn-danger"
-                                        href="{{ route('product.destroy', $product->id) }}"><i
-                                            class="fas fa-trash"></i></a>
+                                    <button class="btn btn-circle btn-danger" data-toggle="modal"
+                                        data-target="#modalDeleteProduct" data-product-id="{{ $product->id }}"
+                                        href=""><i class="fas fa-trash"></i></button>
                                     {{-- </div> --}}
                                 </div>
                             </div>
@@ -52,7 +52,16 @@
 </ul>
 @endforeach
 @else
-<p>Gak ada produk nih</p>
+<center>
+    <div class="card float-center" style="width: 80%">
+        <div class="card-body">
+            <h5 class="card-title">Belum ada produk nih! :(</h5>
+            <p class="card-text">Jadilah nelayan yang makmur dengan menjual produkmu dengan mandiri!.</p>
+            <a href="{{ route("product.new") }}" class="btn btn-primary">Tambah Produk</a>
+        </div>
+    </div>
+</center>
+
 @endif
 <!-- Large modal -->
 
@@ -77,6 +86,26 @@
     </div>
 </div>
 
+{{-- Modal box for product delete confirm --}}
+<div class="modal fade modalDeleteProduct" id="modalDeleteProduct" tabindex="-1" role="dialog"
+    aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalCenterTitle">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <a class="btn btn-danger delete-product">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('after-script')
 <script>
     $('.modalProductDetail').on('show.bs.modal', function (event) {
@@ -94,6 +123,17 @@
                 modal.find('.modal-body').html(response)
             }
         })
+
+    })
+
+    $('.modalDeleteProduct').on('show.bs.modal', function (event) {
+
+        var button = $(event.relatedTarget) // Button that triggered the modal
+        var product_id = button.data('product-id') // Extract product id
+
+        var modal = $(this)
+        modal.find('.modal-title').text(`Mau menghapus produk ID ${product_id}?`)
+        $('.delete-product').attr('href', '/admin/products/destroy/' + product_id)
 
     })
 

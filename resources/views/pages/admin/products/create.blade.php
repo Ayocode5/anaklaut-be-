@@ -13,7 +13,7 @@
                     @csrf
                     <div class="form-group">
                         <label for="formGroupExampleInput">Nama Produk</label>
-                        <input value="{{ old('name') }}" type="text" class="@error('name') is-invalid @enderror form-control form-control-user" id="name" name="name" placeholder="ikan tuna">
+                        <input value="{{ old('name') }}" type="text" class="@error('name') is-invalid @enderror form-control form-control-user" id="name" name="name" placeholder="Ikan Tuna">
                         @error('name')
                         <div class="invalid-feedback">
                             Tentukan nama produk!   
@@ -31,8 +31,8 @@
                           </select>
                     </div>
                     <div class="form-group">
-                        <label for="formGroupExampleInput2">Berat (gram)</label>
-                        <input id="weight" name="weight" type="number" class="@error('weight') is-invalid @enderror form-control" value="{{ old('weight') }}" placeholder="1000">
+                        <label for="formGroupExampleInput2">Berat (KG)</label>
+                        <input id="weight" name="weight" type="number" class="@error('weight') is-invalid @enderror form-control" value="{{ old('weight') }}" placeholder="10">
                         @error('weight')
                         <div class="invalid-feedback">
                             Tentukan berat barang!   
@@ -49,7 +49,7 @@
                         @enderror
                     </div>
                     <div class="form-group">
-                        <label for="formGroupExampleInput2">Harga (kilo)</label>
+                        <label for="formGroupExampleInput2">Harga/KG</label>
                         <input value="{{ old('price') }}" id="price" name="price" type="number" class="@error('price') is-invalid @enderror form-control" placeholder="5000">
                         @error('price')
                         <div class="invalid-feedback">
@@ -76,7 +76,7 @@
                         @enderror
                     </div>
                     <div class="form-group">
-                        <label for="formGroupExampleInput2">Stok (kg)</label>
+                        <label for="formGroupExampleInput2">Stok</label>
                         <input value="{{ old('stock') }}" id="stock" name="stock" type="number" class="@error('stock') is-invalid @enderror form-control" placeholder="20">
                         @error('stock')
                         <div class="invalid-feedback">

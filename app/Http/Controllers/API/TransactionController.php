@@ -16,7 +16,7 @@ use App\Models\Transaction;
 use App\Models\User;
 
 
-interface Midtrans
+interface PaymentGateway
 {
     public function request_token($request);
     public function checkout_finish(Request $request);
@@ -26,12 +26,18 @@ interface Midtrans
     public function notification_transaction(Request $request);
 }
 
-class MidtransPayment implements Midtrans
+class MidtransPayment implements PaymentGateway
 {
     const EXPIRY_ORDER = [
         "unit" => "day",
         "duration" => 1
     ];
+
+    const ENABLED_PAYMENT = array(
+        "bca_va",
+        // "gopay",
+        // "indomaret"
+    );
 
     public function request_token($request)
     {
@@ -57,6 +63,7 @@ class MidtransPayment implements Midtrans
 
         //MENGAMBIL DETAIL ADMIN
         $admin = Admin::findOrFail($orders[0]["order_from"]);
+        $customer = User::findOrFail($orders[0]["customer_id"]);
 
         error_log("*** Menyiapkan midtrans standard array order details");
         foreach ($product["items"] as $key => $value) {
@@ -76,11 +83,7 @@ class MidtransPayment implements Midtrans
                 'gross_amount' => 1,
             ),
 
-            "enabled_payments" => array(
-                "bca_va",
-                "gopay",
-                "indomaret"
-            ),
+            "enabled_payments" => self::ENABLED_PAYMENT,
 
             "bca_va" => array(
                 "va_number" => strval($admin->rek_num),
@@ -101,14 +104,14 @@ class MidtransPayment implements Midtrans
             ),
 
             'customer_details' => array( //DATA CUSTOMER MASIH STATIS
-                'first_name' => 'customer',
-                'last_name' => '1',
-                'email' => 'customer@example.com',
+                'first_name' => $customer->name,
+                // 'last_name' => '1',
+                'email' => $customer->email,
                 'phone' => '08111222333',
                 'shipping_address' => array(
-                    'first_name'    => "customer",
-                    'last_name'     => "1",
-                    'email'         => 'customer@example.com',
+                    'first_name'    => $customer->name,
+                    // 'last_name'     => "1",
+                    'email'         => $customer->email,
                     'phone'         => '08111222333',
                     'address'       => "Bakerstreet 221B.",
                     'city'          => "Jakarta",

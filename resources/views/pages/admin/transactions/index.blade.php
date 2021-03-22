@@ -7,19 +7,20 @@
         @if (!empty($order_keys))
         @foreach ($order_keys as $keyOrder)
         <div class="col-sm-12 col-md-12 col-lg-11 col-xl-12">
-            @if ($products[$keyOrder]["transaction_data"][0]->status_code == 200)
+            {{-- @if ($products[$keyOrder]["transaction_data"][0]->status_code == 200)
                 <div class="card border-left-success mb-3 shadow" style="max-width: 100%;">
             @elseif ($products[$keyOrder]["transaction_data"][0]->status_code == 201)
                 <div class="card border-left-warning mb-3 shadow" style="max-width: 100%;">
             @elseif($products[$keyOrder]["transaction_data"][0]->status_code == 407)
                 <div class="card border-left-danger mb-3 shadow" style="max-width: 100%;">    
-            @endif
-                <div class="card-header">ORDER ID: {{ $keyOrder }} <br>  <small>Waktu Pemesanan: {{ $products[$keyOrder]["transaction_data"][0]->created_at }}</small></div>
+            @endif --}}
+            <div class="card border-left-primary mb-3 shadow" style="max-width: 100%;">
+                <div class="card-header">Order ID: {{ $keyOrder }} <br>  <small>Waktu Pemesanan: {{ $products[$keyOrder]["transaction_data"][0]->created_at }}</small></div>
                 <div class="card-body text-secondary">
                     @foreach ($products[$keyOrder]["detail_products"] as $product)    
                     <div class="row mb-2">
                         <div class="col col-sm-4 col-md-4 col-lg-3">
-                            <img class="border border-secondary rounded shadow" style="height: 100%; width:100%;"
+                            <img class="border rounded shadow" style="height: 100%; width:100%;"
                                 src="{{ $product[0]->product_galleries[0]->image }}"
                                 alt="">
                         </div>
@@ -27,11 +28,11 @@
                             <h5 class="card-title">{{ $product[0]->name }}</h5>
                             <p class="card-text">Total pesan: {{ $products[$keyOrder]["order_quantities"][$loop->index] }} Kg </p>
                             @if ($products[$keyOrder]["transaction_data"][0]->status_code == 407)
-                                Status <i class="badge badge-danger">{{ Str::upper($products[$keyOrder]["transaction_data"][0]->transaction_status) }}</i>
+                                <i class="btn btn-danger">{{ Str::upper($products[$keyOrder]["transaction_data"][0]->transaction_status) }}</i>
                             @elseif($products[$keyOrder]["transaction_data"][0]->status_code == 200)
-                                Status <i class="badge badge-success">{{ Str::upper($products[$keyOrder]["transaction_data"][0]->transaction_status) }}</i>
+                                <i class="btn btn-success">{{ Str::upper($products[$keyOrder]["transaction_data"][0]->transaction_status) }}</i>
                             @elseif($products[$keyOrder]["transaction_data"][0]->status_code == 201)
-                                Status <i class="badge badge-warning">{{ Str::upper($products[$keyOrder]["transaction_data"][0]->transaction_status) }}</i>
+                                <i class="btn btn-warning">{{ Str::upper($products[$keyOrder]["transaction_data"][0]->transaction_status) }}</i>
                             @endif
                         </div>
                     </div>
@@ -39,9 +40,9 @@
                     Pemesan: iyan@gmail.com
                     <div class="row mt-2">
                         <div class="col col-4">
-                            <small>
+                        
                                 <p>Total Transfer <br> Rp. {{ $products[$keyOrder]["transaction_data"][0]->payment->gross_amount }}</p>
-                            </small>
+                            
                         </div>
                         <div class="col col-8">
                             @if ($products[$keyOrder]["transaction_data"][0]->status_code !== 407)    
@@ -72,7 +73,14 @@
         @endforeach
 
         @else
-        <p>GAK ADA TRANSAKSI</p>
+        <center>
+            <div class="card" style="width: 100%">
+                <div class="card-body">
+                    <h5 class="card-title">Belum ada transaksi! :(</h5>
+                    <p class="card-text">Jadilah nelayan yang makmur dengan menjual produkmu dengan mandiri!.</p>
+                </div>
+            </div>
+        </center>
         @endif
         {{-- <div class="col-12 col-sm-12 col-md-6 col-xl-6">
             <div class="card mb-3 shadow" style="max-width: 100%;">

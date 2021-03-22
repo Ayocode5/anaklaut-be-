@@ -18,7 +18,7 @@ class CreateProductsTable extends Migration
             $table->foreignId('owned_by');
             $table->char('name',100);
             $table->char('type', 50);
-            $table->mediumInteger('weight');
+            $table->float('weight');
             $table->longText('description');
             $table->integer('price');
             $table->integer('grosir_price');
